@@ -59,44 +59,46 @@ classifier.learn('i hate mornings', 'positive');
 classifier.unlearn('i hate mornings', 'positive');
 ```
 
-### Simple categorization: Categorize a document it has never seen before
+### Remove a category
 
 ```
-classifier.categorize('awesome, cool, amazing!! Yay.')
-// => 'positive'
+    classifier.removeCategory('troll');
 ```
 
-### Verbose categorization
+
+###  categorization
 
 ```
-let catData = classifier.categorizeObj("I've always hated Martians");
-
-console.log(catData.chosenCategory)
+classifier.categorize("I've always hated Martians"); // simple
 // => 'negative'
 
-console.log(JSON.stringify(catData.likelihoods))
-// => 
-[
-    {
-        category: 'negative',
-        logLikelihood: 0.008489, // log likelihood
-        scaledLogLikelihood: 100 // log likelihood on a [0-100] scale, not probability (100 doesn't mean it's 100% certain)
-    },
-    {
-        category: 'troll',
-        logLikelihood: 0.00412, 
-        scaledLogLikelihood: 43 
-    },
-    {
-        category: 'spam',
-        logLikelihood: 0.00152, 
-        scaledLogLikelihood: 18 
-    },
-    {
-        category: 'positive',
-        logLikelihood: 0.000074, 
-        scaledLogLikelihood: 0
-    },
+classifier.categorize("I've always hated Martians", true); // verbose
+// =>
+// =>
+{
+    likelihoods: [
+            {
+                category: 'negative',
+                logLikelihood: 0.008489, // log likelihood
+                scaledLogLikelihood: 100 // log likelihood on a [0-100] scale, not probability (100 doesn't mean it's 100% certain)
+            },
+            {
+                category: 'troll',
+                logLikelihood: 0.00412,
+                scaledLogLikelihood: 43
+            },
+            {
+                category: 'spam',
+                logLikelihood: 0.00152,
+                scaledLogLikelihood: 18
+            },
+            {
+                category: 'positive',
+                logLikelihood: 0.000074,
+                scaledLogLikelihood: 0
+            },
+      predictedCategory : 'negative'
+}
 ```
 
 
@@ -134,39 +136,45 @@ Teach your classifier what `category` should be associated with an array `text` 
 
 The classifier will unlearn the `text` that was associated with `category`.
 
+### `classifier.removeCategory(category)`
+
+The category is removed and the classifier data are updated accordingly.
+
 ### `classifier.categorize(text, verbose)`
 
 *Parameters*
   `text {String}`
-  `verbose {Boolean}` wether or not it returns more data associated with the categorization.
+  `verbose {Boolean}` whether or not it should returns more data associated with the categorization.
 
-*Returns*
-   `{Object}` An object with the `category` it thinks `text` belongs to. Based on what it learned with `classifier.learn()`.
-```
-{
-  predictedCategory: 'positive'
-}
-```
+If not `verbose` :
+
+    *Returns*
+       `{String}` An object with the `category` it thinks `text` belongs to. Based on what it learned with `classifier.learn()`.
+    ```
+    {
+      predictedCategory: 'positive'
+    }
+    ```
 
 If `verbose`
 
-*Returns*
- `{Object}` An object with the `category` it thinks `text` belongs to and an array of the `categories` ordered by likelihood (most likely first).
+    *Returns*
+     `{Object}` An object with the `predictedCategory` and an array of the categories ordered by likelihood (most likely first).
 
-```
-{
-    likelihoods :  [
-                    ...
-                      {
-                        category: 'spam',
-                        logLikelihood: 0.0047591, // logarithmic likelihood
-                        scaledLogLikelihood: 84 // likelihood on a scale from 0 to 100
-                      },
-                      ...
-                   ]
-    predictedCategory : 'negative'  //--> the main category bayes thinks the text belongs to. As a string
-}
-```
+    ```
+    {
+        likelihoods :  [
+                        ...
+                          {
+                            category: 'spam',
+                            logLikelihood: 0.0047591, // logarithmic likelihood
+                            scaledLogLikelihood: 84 // likelihood on a scale from 0 to 100
+                          },
+                          ...
+                       ]
+        predictedCategory : 'negative'  //--> the main category bayes thinks the text belongs to. As a string
+    }
+    ```
 
 ### `classifier.toJson()`
 
