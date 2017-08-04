@@ -1,11 +1,11 @@
 # classificator
-naive bayes classifier
 
-# `bayes-probas` : Bayes classifier for node.js
-
-Forked from https://www.npmjs.com/package/bayes, and adds some functionnalities upon it (returning more informations when categorizing, unlearning).
+Naive Bayes classifier for node.js
 
 `bayes` takes a document (piece of text), and tells you what category that document belongs to.
+
+
+_Forked from https://www.npmjs.com/package/bayes, and adds some functionnalities upon it (returning more informations when categorizing, unlearning)._
 
 ## What can I use this for?
 
@@ -19,13 +19,13 @@ More here: https://en.wikipedia.org/wiki/Naive_Bayes_classifier
 
 ## Installing
 
-You'll need node 5.0+
+Recommended: Node v6.0.0 +
 
 ```
-npm install bayes-probas
+npm install --save classificator
 ```
 
-## Differences with bayes-proba
+## Differences with bayes-proba (original package)
 
 For now, apart from a less misleading package name, I also changed misnommers in categorizeObj 
 
