@@ -93,7 +93,9 @@ describe('bayes .learn() correctness', function () {
     classifier.learn('I dont really know what to make of this.', 'neutral')
 
     //now test it to see that it correctly categorizes a new document
-    assert.equal(classifier.categorize('awesome, cool, amazing!! Yay.'), 'positive')
+    assert.deepEqual(classifier.categorize('awesome, cool, amazing!! Yay.'), {
+      predictedCategory: 'positive'
+    })
     done()
   })
 
@@ -126,7 +128,9 @@ describe('bayes .learn() correctness', function () {
     assert.equal(japaneseFrequencyCount['Chinese'], 1)
 
     //now test it to see that it correctly categorizes a new document
-    assert.equal(classifier.categorize('Chinese Chinese Chinese Tokyo Japan'), 'chinese')
+    assert.deepEqual(classifier.categorize('Chinese Chinese Chinese Tokyo Japan'), {
+      predictedCategory: 'Chinese'
+    })
 
     done()
   })
