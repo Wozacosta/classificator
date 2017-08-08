@@ -129,7 +129,7 @@ describe('bayes .learn() correctness', function () {
 
     //now test it to see that it correctly categorizes a new document
     assert.deepEqual(classifier.categorize('Chinese Chinese Chinese Tokyo Japan'), {
-      predictedCategory: 'Chinese'
+      predictedCategory: 'chinese'
     })
 
     done()
