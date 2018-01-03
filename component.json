@@ -1,9 +1,0 @@
-{
-    "name": "classificator",
-
-    "main": "lib/classificator.js",
-
-    "scripts": [
-        "lib/classificator.js"
-    ]
-}
