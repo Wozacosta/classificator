@@ -7,8 +7,6 @@ Naive Bayes classifier for node.js
 `bayes` takes a document (piece of text), and tells you what category that document belongs to.
 
 
-_Forked from https://www.npmjs.com/package/bayes, and adds some functionnalities upon it (returning more informations when categorizing, unlearning)._
-
 ## What can I use this for?
 
 You can use this for categorizing any text content into any arbitrary set of **categories**. For example:
@@ -19,6 +17,7 @@ You can use this for categorizing any text content into any arbitrary set of **c
 
 More here: https://en.wikipedia.org/wiki/Naive_Bayes_classifier
 
+
 ## Installing
 
 Recommended: Node v6.0.0 +
@@ -27,31 +26,22 @@ Recommended: Node v6.0.0 +
 npm install --save classificator
 ```
 
-## Differences with bayes-proba (original package)
-
-For now, apart from a less misleading package name, I also changed misnommers in categorizeObj 
-
-~~probas~~ -> likelihoods
-~~proba~~ -> logLikelihood
-~~probaH~~ -> scaledLogLikelihood
-~~chosenCategory~~ -> predictedCategory
-
 
 ## Usage
 
 ```
-const bayes = require('bayes-probas')
+const bayes = require('classificator')
 const classifier = bayes()
-``` 
+```
 
-### Teach your classifier 
+### Teach your classifier
 
 ```
 classifier.learn('amazing, awesome movie! Had a good time', 'positive')
 classifier.learn('Buy my free viagra pill and get rich!', 'spam')
 classifier.learn('I really hate dust and annoying cats', 'negative')
 classifier.learn('LOL this sucks so hard', 'troll')
-``` 
+```
 
 ### Make your classifier unlearn
 
@@ -64,45 +54,34 @@ classifier.unlearn('i hate mornings', 'positive');
 ### Remove a category
 
 ```
-    classifier.removeCategory('troll');
+classifier.removeCategory('troll');
 ```
-
 
 ###  categorization
 
 ```
-classifier.categorize("I've always hated Martians"); // simple
-// => 'negative'
-
-classifier.categorize("I've always hated Martians", true); // verbose
-// =>
-// =>
-{
-    likelihoods: [
-            {
-                category: 'negative',
-                logLikelihood: 0.008489, // log likelihood
-                scaledLogLikelihood: 100 // log likelihood on a [0-100] scale, not probability (100 doesn't mean it's 100% certain)
-            },
-            {
-                category: 'troll',
-                logLikelihood: 0.00412,
-                scaledLogLikelihood: 43
-            },
-            {
-                category: 'spam',
-                logLikelihood: 0.00152,
-                scaledLogLikelihood: 18
-            },
-            {
-                category: 'positive',
-                logLikelihood: 0.000074,
-                scaledLogLikelihood: 0
-            },
-      predictedCategory : 'negative'
-}
+classifier.categorize("I've always hated Martians");
+// => {
+        likelihoods: [
+          {
+            category: 'negative',
+            logLikelihood: -17.241944258040537,
+            logProba: -0.6196197927020783,
+            proba: 0.538149006882628
+          }, {
+            category: 'positive',
+            logLikelihood: -17.93509143860048,
+            logProba: -1.312766973262022,
+            proba: 0.26907450344131445
+          }, {
+            category: 'spam',
+            logLikelihood: -18.26854831109384,
+            logProba: -1.646223845755383,
+            proba: 0.19277648967605832 }
+        ],
+        predictedCategory: 'negative'
+      }
 ```
-
 
 ### serialize the classifier's state as a JSON string.
 
@@ -112,7 +91,9 @@ classifier.categorize("I've always hated Martians", true); // verbose
 
 `let revivedClassifier = bayes.fromJson(stateJson)`
 
+
 --------
+
 
 ## API
 
@@ -142,41 +123,33 @@ The classifier will unlearn the `text` that was associated with `category`.
 
 The category is removed and the classifier data are updated accordingly.
 
-### `classifier.categorize(text, verbose)`
+### `classifier.categorize(text)`
 
 *Parameters*
-  `text {String}`
-  `verbose {Boolean}` whether or not it should returns more data associated with the categorization.
 
-If not `verbose` :
+`text {String}`
 
-    *Returns*
-       `{String}` An object with the `category` it thinks `text` belongs to. Based on what it learned with `classifier.learn()`.
-    ```
-    {
-      predictedCategory: 'positive'
-    }
-    ```
+*Returns*
 
-If `verbose`
+`{Object}` An object with the `predictedCategory` and an array of the categories
+ordered by likelihood (most likely first).
 
-    *Returns*
-     `{Object}` An object with the `predictedCategory` and an array of the categories ordered by likelihood (most likely first).
-
-    ```
-    {
-        likelihoods :  [
-                        ...
-                          {
-                            category: 'spam',
-                            logLikelihood: 0.0047591, // logarithmic likelihood
-                            scaledLogLikelihood: 84 // likelihood on a scale from 0 to 100
-                          },
-                          ...
-                       ]
-        predictedCategory : 'negative'  //--> the main category bayes thinks the text belongs to. As a string
-    }
-    ```
+```
+{
+    likelihoods : [
+      ...
+      {
+        category: 'positive',
+        logLikelihood: -17.93509143860048,
+        logProba: -1.312766973262022,
+        proba: 0.26907450344131445
+      },
+      ...
+    ],
+    predictedCategory : 'negative'  //--> the main category bayes thinks text
+                                          belongs to. As a string
+}
+```
 
 ### `classifier.toJson()`
 
