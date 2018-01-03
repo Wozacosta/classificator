@@ -1,6 +1,7 @@
 # classificator
 
 [![NPM Licence shield](https://img.shields.io/github/license/Wozacosta/classificator.svg)](https://github.com/Wozacosta/classificator/blob/master/LICENSE)
+[![NPM release version shield](https://img.shields.io/npm/v/classificator.svg)](https://www.npmjs.com/package/classificator)
 
 Naive Bayes classifier for node.js
 
