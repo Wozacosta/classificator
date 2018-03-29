@@ -92,6 +92,8 @@ classifier.categorize("I've always hated Martians");
 
 `let revivedClassifier = bayes.fromJson(stateJson)`
 
+note: `stateJson` can either be a JSON string (obtained from `classifier.toJson()`), or an object
+
 
 --------
 
