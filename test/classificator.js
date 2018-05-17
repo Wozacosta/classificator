@@ -80,7 +80,7 @@ describe('bayes .learn() correctness', function () {
   //sentiment analysis test
   it('categorizes correctly for `positive` and `negative` categories', function (done) {
 
-    var classifier = bayes()
+    let classifier = bayes();
 
     //teach it positive phrases
     classifier.learn('amazing, awesome movie!! Yeah!!', 'positive')
@@ -93,9 +93,7 @@ describe('bayes .learn() correctness', function () {
     classifier.learn('I dont really know what to make of this.', 'neutral')
 
     //now test it to see that it correctly categorizes a new document
-    assert.deepEqual(classifier.categorize('awesome, cool, amazing!! Yay.'), {
-      predictedCategory: 'positive'
-    })
+    assert.deepEqual(classifier.categorize('awesome, cool, amazing!! Yay.').predictedCategory, 'positive')
     done()
   })
 
@@ -128,9 +126,7 @@ describe('bayes .learn() correctness', function () {
     assert.equal(japaneseFrequencyCount['Chinese'], 1)
 
     //now test it to see that it correctly categorizes a new document
-    assert.deepEqual(classifier.categorize('Chinese Chinese Chinese Tokyo Japan'), {
-      predictedCategory: 'chinese'
-    })
+    assert.deepEqual(classifier.categorize('Chinese Chinese Chinese Tokyo Japan').predictedCategory,'chinese')
 
     done()
   })
