@@ -1,7 +1,7 @@
 {
   "name": "classificator",
   "description": "Naive Bayes classifier with verbose informations for node.js",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": "Wozacosta",
   "keywords": [
     "naive",
