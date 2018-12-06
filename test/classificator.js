@@ -152,5 +152,39 @@ describe('bayes .learn() correctness', function () {
 
     done()
   })
+
+  it('correctly computes probabilities without prior', function (done) {
+    var classifier = bayes({ fitPrior: false})
+
+    // learn on a very unbalanced dataset
+    classifier.learn('aa', '1')
+    classifier.learn('aa', '1')
+    classifier.learn('aa', '1')
+    classifier.learn('bb', '2')
+
+    // test the likelihoods obtained on test strings
+    assert.equal(classifier.categorize('cc').likelihoods[0].proba, 0.5)
+    assert.equal(Number(classifier.categorize('bb').likelihoods[0].proba).toFixed(6), Number(0.76923077).toFixed(6))
+    assert.equal(Number(classifier.categorize('aa').likelihoods[0].proba).toFixed(6), Number(0.70588235).toFixed(6))
+
+    done()
+  })
+
+  it('correctly computes probabilities with prior', function (done) {
+    var classifier = bayes()
+
+    // learn on a very unbalanced dataset
+    classifier.learn('aa', '1')
+    classifier.learn('aa', '1')
+    classifier.learn('aa', '1')
+    classifier.learn('bb', '2')
+
+    // test the likelihoods obtained on test strings
+    assert.equal(classifier.categorize('cc').likelihoods[0].proba, 0.75)
+    assert.equal(Number(classifier.categorize('bb').likelihoods[0].proba).toFixed(6), Number(0.52631579).toFixed(6))
+    assert.equal(Number(classifier.categorize('aa').likelihoods[0].proba).toFixed(6), Number(0.87804878).toFixed(6))
+
+    done()
+  })
 })
 
