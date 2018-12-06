@@ -104,7 +104,9 @@ note: `stateJson` can either be a JSON string (obtained from `classifier.toJson(
 
 Returns an instance of a Naive-Bayes Classifier.
 
-Pass in an optional `options` object to configure the instance. If you specify a `tokenizer` function in `options`, it will be used as the instance's tokenizer. It receives a (string) `text` argument - this is the string value that is passed in by you when you call `.learn()` or `.categorize()`. It must return an array of tokens. The default tokenizer removes punctuation and splits on spaces.
+Pass in an optional `options` object to configure the instance. 
+
+If you specify a `tokenizer` function in `options`, it will be used as the instance's tokenizer. It receives a (string) `text` argument - this is the string value that is passed in by you when you call `.learn()` or `.categorize()`. It must return an array of tokens. The default tokenizer removes punctuation and splits on spaces.
 
 Eg.
 
@@ -113,6 +115,15 @@ let classifier = bayes({
     tokenizer: function (text) { return text.split(' ') }
 })
 ```
+
+You can specify the `alpha` parameter of the [additive smoothing operation](https://en.wikipedia.org/wiki/Additive_smoothing).
+This is an integer.
+The default value is 1
+
+You can also specify the `fitPrior` parameter.
+Defines how the [prior probablity](https://en.wikipedia.org/wiki/Prior_probability) is calculated.
+If set to `false`, the classifier will use an uniform prior rather than a learnt one.
+The default value is `true`.
 
 ### `classifier.learn(text, category)`
 
