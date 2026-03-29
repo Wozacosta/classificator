@@ -518,7 +518,7 @@ const classifier = bayes.fromJson(saved, { tokenizer: myTokenizer })
 
 ## Test Suite
 
-The library includes a comprehensive test suite with **109 tests** (powered by Vitest):
+The library includes a comprehensive test suite with **121 tests** (powered by Vitest):
 
 ```
   Unit tests (82)        - Individual method correctness, edge cases,
@@ -532,6 +532,9 @@ The library includes a comprehensive test suite with **109 tests** (powered by V
                            analysis, multi-category topic classification,
                            incremental learning, mistake correction,
                            imbalanced dataset handling
+
+  Dist tests (12)        - Verify compiled output: CJS require, ESM import,
+                           named exports, type declarations, round-trips
 ```
 
 Run with:
@@ -590,7 +593,7 @@ npm test
 - Tokenizer and tokenPreprocessor validation at construction time
 - `getCategoryStats()` now includes `wordCount` in `_total`
 - GitHub Actions CI for Node 14/16/18/20
-- Comprehensive test suite (109 tests: unit + integration + E2E)
+- Comprehensive test suite (121 tests: unit + integration + E2E + dist)
 - Improved JSDoc and README documentation with diagrams
 
 ### 0.4.0
