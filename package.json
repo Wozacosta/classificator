@@ -1,7 +1,7 @@
 {
   "name": "classificator",
   "description": "Naive Bayes classifier with verbose informations for node.js",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "Wozacosta",
   "keywords": [
     "naive",
@@ -23,7 +23,7 @@
     "mocha": "^9.0.2"
   },
   "engines": {
-    "node": ">=5.0.0"
+    "node": ">=14.0.0"
   },
   "main": "./lib/classificator",
   "repository": {
