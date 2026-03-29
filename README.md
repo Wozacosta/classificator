@@ -4,7 +4,7 @@
 [![NPM Licence shield](https://img.shields.io/github/license/Wozacosta/classificator.svg)](https://github.com/Wozacosta/classificator/blob/master/LICENSE)
 [![NPM release version shield](https://img.shields.io/npm/v/classificator.svg)](https://www.npmjs.com/package/classificator)
 
-A fast, lightweight Naive Bayes classifier for Node.js with explainable predictions.
+A fast, lightweight Naive Bayes classifier for Node.js with explainable predictions. Written in TypeScript with full type declarations. Ships dual CJS/ESM.
 
 ```
                     +-----------------+
@@ -42,17 +42,27 @@ More here: https://en.wikipedia.org/wiki/Naive_Bayes_classifier
 
 ## Installing
 
-Recommended: Node v14.0.0 +
+Recommended: Node v18.0.0 +
 
 ```
-npm install --save classificator
+npm install classificator
 ```
 
 
 ## Quick Start
 
-```js
+```ts
+// ESM (recommended)
+import bayes from 'classificator'
+
+// or with named imports
+import { Naivebayes, fromJson } from 'classificator'
+
+// CJS (still works)
 const bayes = require('classificator')
+```
+
+```ts
 const classifier = bayes()
 
 // Train
@@ -62,6 +72,36 @@ classifier.learn('terrible, boring film', 'negative')
 // Classify
 const result = classifier.categorize('awesome film')
 console.log(result.predictedCategory) // => 'positive'
+```
+
+### TypeScript
+
+Full type declarations are included. All interfaces are exported:
+
+```ts
+import bayes from 'classificator'
+import type {
+  NaivebayesOptions,    // constructor options
+  CategorizeResult,     // return type of categorize()
+  Likelihood,           // single category likelihood entry
+  InfluentialToken,     // return type of topInfluentialTokens()
+  BatchItem,            // { text, category } for learnBatch()
+  CategoryStats,        // per-category stats
+  CategoryStatsResult,  // return type of getCategoryStats()
+} from 'classificator'
+
+const options: NaivebayesOptions = { alpha: 0.5, fitPrior: false }
+const classifier = bayes(options)
+
+classifier.learn('great movie', 'positive')
+const result: CategorizeResult = classifier.categorize('great')
+```
+
+You can also import the class directly:
+
+```ts
+import { Naivebayes } from 'classificator'
+const classifier = new Naivebayes({ alpha: 0.5 })
 ```
 
 
@@ -478,7 +518,7 @@ const classifier = bayes.fromJson(saved, { tokenizer: myTokenizer })
 
 ## Test Suite
 
-The library includes a comprehensive test suite with **109 tests**:
+The library includes a comprehensive test suite with **121 tests** (powered by Vitest):
 
 ```
   Unit tests (82)        - Individual method correctness, edge cases,
@@ -492,6 +532,9 @@ The library includes a comprehensive test suite with **109 tests**:
                            analysis, multi-category topic classification,
                            incremental learning, mistake correction,
                            imbalanced dataset handling
+
+  Dist tests (12)        - Verify compiled output: CJS require, ESM import,
+                           named exports, type declarations, round-trips
 ```
 
 Run with:
@@ -505,6 +548,23 @@ npm test
 
 
 ## Changelog
+
+### 1.0.0
+
+**TypeScript rewrite:**
+- Full TypeScript source with exported types (`NaivebayesOptions`, `CategorizeResult`, `Likelihood`, `InfluentialToken`, `CategoryStats`, `BatchItem`)
+- Dual CJS/ESM output via tsup — `require()` and `import` both work
+- Type declarations (`.d.ts`) included for TypeScript consumers
+- ES6 class-based implementation (same API, better types)
+
+**Modern tooling:**
+- Build: tsup (esbuild-based, fast)
+- Test: Vitest (replaces Mocha)
+- CI: Node 18/20/22 with typecheck + build + test steps
+
+**Breaking changes:**
+- Minimum Node version raised to 18.0.0 (14 and 16 are EOL)
+- Named ESM imports available: `import { Naivebayes, fromJson } from 'classificator'`
 
 ### 0.5.0
 
@@ -533,7 +593,7 @@ npm test
 - Tokenizer and tokenPreprocessor validation at construction time
 - `getCategoryStats()` now includes `wordCount` in `_total`
 - GitHub Actions CI for Node 14/16/18/20
-- Comprehensive test suite (109 tests: unit + integration + E2E)
+- Comprehensive test suite (121 tests: unit + integration + E2E + dist)
 - Improved JSDoc and README documentation with diagrams
 
 ### 0.4.0
