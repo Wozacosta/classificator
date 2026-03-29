@@ -31,6 +31,6 @@
     "url": "https://github.com/Wozacosta/classificator.git"
   },
   "scripts": {
-    "test": "mocha -t 30000 -R spec"
+    "test": "mocha -t 30000 -R spec test/*.js"
   }
 }

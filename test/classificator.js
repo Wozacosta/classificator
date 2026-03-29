@@ -19,6 +19,15 @@ describe('bayes() init', function () {
       assert.throws(function () { bayes(invalidOptions) }, TypeError)
     })
   })
+
+  it('throws TypeError when tokenizer is not a function', function () {
+    assert.throws(function () { bayes({ tokenizer: 'not a function' }) }, TypeError)
+    assert.throws(function () { bayes({ tokenizer: 42 }) }, TypeError)
+  })
+
+  it('throws TypeError when tokenPreprocessor is not a function', function () {
+    assert.throws(function () { bayes({ tokenPreprocessor: 'bad' }) }, TypeError)
+  })
 })
 
 describe('bayes using custom tokenizer', function () {
@@ -41,6 +50,81 @@ describe('bayes using custom tokenizer', function () {
     assert.equal(classifier.wordFrequencyCount.happy.c, 1)
     assert.equal(classifier.wordFrequencyCount.happy.d, 1)
     assert.deepStrictEqual(classifier.categories, { happy: true })
+  })
+})
+
+describe('bayes using tokenPreprocessor', function () {
+  it('applies tokenPreprocessor after tokenizer', function () {
+    var stopwords = new Set(['the', 'a', 'is', 'in'])
+    var classifier = bayes({
+      tokenPreprocessor: function (tokens) {
+        return tokens
+          .map(function (t) { return t.toLowerCase() })
+          .filter(function (t) { return !stopwords.has(t) })
+      }
+    })
+
+    classifier.learn('The cat is in a hat', 'animals')
+
+    // stopwords should be removed
+    assert.equal(classifier.wordFrequencyCount.animals['the'], undefined)
+    assert.equal(classifier.wordFrequencyCount.animals['a'], undefined)
+    assert.equal(classifier.wordFrequencyCount.animals['is'], undefined)
+    assert.equal(classifier.wordFrequencyCount.animals['in'], undefined)
+
+    // content words should remain (lowercased)
+    assert.equal(classifier.wordFrequencyCount.animals['cat'], 1)
+    assert.equal(classifier.wordFrequencyCount.animals['hat'], 1)
+  })
+
+  it('works with stemming-style preprocessor', function () {
+    var classifier = bayes({
+      tokenPreprocessor: function (tokens) {
+        return tokens.map(function (t) {
+          // crude stemming: strip trailing 's', 'ing', 'ed'
+          return t.replace(/(ing|ed|s)$/i, '').toLowerCase()
+        })
+      }
+    })
+
+    classifier.learn('running dogs played', 'active')
+    classifier.learn('sleeping cats rested', 'passive')
+
+    var result = classifier.categorize('dogs playing')
+    assert.equal(result.predictedCategory, 'active')
+  })
+
+  it('preprocessor is preserved through fromJson with options', function () {
+    var preprocessor = function (tokens) {
+      return tokens.map(function (t) { return t.toLowerCase() })
+    }
+
+    var classifier = bayes({ tokenPreprocessor: preprocessor })
+    classifier.learn('HELLO', 'greetings')
+
+    var revived = bayes.fromJson(classifier.toJson(), { tokenPreprocessor: preprocessor })
+    var result = revived.categorize('HELLO')
+    assert.equal(result.predictedCategory, 'greetings')
+  })
+
+  it('classifier.options preserves runtime options after fromJson', function () {
+    var preprocessor = function (tokens) {
+      return tokens.map(function (t) { return t.toLowerCase() })
+    }
+    var tokenizer = function (text) { return text.split(' ') }
+
+    var classifier = bayes({ tokenPreprocessor: preprocessor, tokenizer: tokenizer })
+    classifier.learn('HELLO WORLD', 'greetings')
+
+    var revived = bayes.fromJson(classifier.toJson(), {
+      tokenPreprocessor: preprocessor,
+      tokenizer: tokenizer
+    })
+
+    assert.strictEqual(revived.options.tokenPreprocessor, preprocessor)
+    assert.strictEqual(revived.options.tokenizer, tokenizer)
+    assert.strictEqual(revived.tokenPreprocessor, preprocessor)
+    assert.strictEqual(revived.tokenizer, tokenizer)
   })
 })
 
@@ -265,6 +349,14 @@ describe('bayes .unlearn() correctness', function () {
     classifier.learn('hello', 'greetings')
     assert.throws(function () { classifier.unlearn(123, 'greetings') }, TypeError)
   })
+
+  it('does not leave negative wordCount', function () {
+    var classifier = bayes()
+    classifier.learn('hello', 'greetings')
+    classifier.unlearn('hello', 'greetings')
+
+    assert.equal(classifier.wordCount['greetings'], undefined)
+  })
 })
 
 describe('bayes .removeCategory()', function () {
@@ -317,6 +409,21 @@ describe('bayes .removeCategory()', function () {
 
     classifier.removeCategory('only')
     assert.ok(classifier.vocabularySize < sizeBefore)
+  })
+
+  it('does not produce negative vocabulary counts', function () {
+    var classifier = bayes()
+
+    classifier.learn('shared word', 'a')
+    classifier.learn('shared word', 'b')
+
+    classifier.removeCategory('a')
+
+    // 'shared' and 'word' should still have count >= 0
+    Object.keys(classifier.vocabulary).forEach(function (token) {
+      assert.ok(classifier.vocabulary[token] >= 0,
+        'vocabulary[' + token + '] should be >= 0, got ' + classifier.vocabulary[token])
+    })
   })
 })
 
@@ -432,6 +539,22 @@ describe('bayes alpha parameter', function () {
 
     assert.notEqual(prob1, prob2)
   })
+
+  it('alpha: 0 categorization works but unseen tokens zero-out a category', function () {
+    var classifier = bayes({ alpha: 0 })
+
+    classifier.learn('happy fun', 'positive')
+    classifier.learn('sad bad', 'negative')
+
+    // 'happy' was only seen in positive, so negative gets zero probability for it
+    var result = classifier.categorize('happy')
+    assert.equal(result.predictedCategory, 'positive')
+
+    // result should not contain NaN
+    result.likelihoods.forEach(function (l) {
+      assert.ok(!isNaN(l.proba), 'proba should not be NaN')
+    })
+  })
 })
 
 describe('bayes method chaining', function () {
@@ -518,6 +641,114 @@ describe('bayes .categorizeTopN()', function () {
     var result = classifier.categorizeTopN('happy fun', 1)
     assert.equal(result.predictedCategory, 'positive')
     assert.equal(result.likelihoods.length, 1)
+  })
+})
+
+describe('bayes .categorizeWithConfidence()', function () {
+  it('returns predictedCategory when above threshold', function () {
+    var classifier = bayes()
+    classifier.learn('happy fun great amazing', 'positive')
+    classifier.learn('sad bad terrible awful', 'negative')
+
+    var result = classifier.categorizeWithConfidence('happy fun great', 0.5)
+    assert.equal(result.predictedCategory, 'positive')
+  })
+
+  it('returns null predictedCategory when below threshold', function () {
+    var classifier = bayes()
+    classifier.learn('aa', 'a')
+    classifier.learn('bb', 'b')
+
+    // with a very high threshold, prediction should be null
+    var result = classifier.categorizeWithConfidence('cc', 0.99)
+    assert.equal(result.predictedCategory, null)
+  })
+
+  it('returns null for empty classifier', function () {
+    var classifier = bayes()
+    var result = classifier.categorizeWithConfidence('hello', 0.5)
+    assert.equal(result.predictedCategory, null)
+  })
+
+  it('still returns full likelihoods array', function () {
+    var classifier = bayes()
+    classifier.learn('aa', 'a')
+    classifier.learn('bb', 'b')
+
+    var result = classifier.categorizeWithConfidence('cc', 0.99)
+    assert.ok(Array.isArray(result.likelihoods))
+    assert.ok(result.likelihoods.length > 0)
+  })
+
+  it('throws TypeError for invalid threshold', function () {
+    var classifier = bayes()
+    classifier.learn('hello', 'greetings')
+
+    assert.throws(function () { classifier.categorizeWithConfidence('hello', -1) }, TypeError)
+    assert.throws(function () { classifier.categorizeWithConfidence('hello', 2) }, TypeError)
+    assert.throws(function () { classifier.categorizeWithConfidence('hello', 'bad') }, TypeError)
+  })
+})
+
+describe('bayes .topInfluentialTokens()', function () {
+  it('returns top tokens for a classification', function () {
+    var classifier = bayes()
+    classifier.learn('happy fun great joy', 'positive')
+    classifier.learn('sad bad terrible gloom', 'negative')
+
+    var tokens = classifier.topInfluentialTokens('happy fun great', 3)
+    assert.ok(Array.isArray(tokens))
+    assert.ok(tokens.length <= 3)
+    assert.ok(tokens.length > 0)
+
+    // each token should have the right shape
+    tokens.forEach(function (t) {
+      assert.ok(t.hasOwnProperty('token'))
+      assert.ok(t.hasOwnProperty('probability'))
+      assert.ok(t.hasOwnProperty('frequency'))
+    })
+  })
+
+  it('returns empty array for empty classifier', function () {
+    var classifier = bayes()
+    var tokens = classifier.topInfluentialTokens('hello')
+    assert.deepEqual(tokens, [])
+  })
+
+  it('tokens are sorted by probability descending', function () {
+    var classifier = bayes()
+    classifier.learn('apple banana cherry', 'fruit')
+    classifier.learn('dog cat bird', 'animal')
+
+    var tokens = classifier.topInfluentialTokens('apple banana cherry', 5)
+    for (var i = 1; i < tokens.length; i++) {
+      assert.ok(tokens[i - 1].probability >= tokens[i].probability)
+    }
+  })
+
+  it('defaults to 5 tokens', function () {
+    var classifier = bayes()
+    classifier.learn('a b c d e f g h', 'letters')
+    classifier.learn('1 2 3', 'numbers')
+
+    var tokens = classifier.topInfluentialTokens('a b c d e f g h')
+    assert.ok(tokens.length <= 5)
+  })
+
+  it('returns empty array when n is 0', function () {
+    var classifier = bayes()
+    classifier.learn('hello world', 'greetings')
+
+    var tokens = classifier.topInfluentialTokens('hello world', 0)
+    assert.deepEqual(tokens, [])
+  })
+
+  it('handles negative n by returning empty array', function () {
+    var classifier = bayes()
+    classifier.learn('hello world', 'greetings')
+
+    var tokens = classifier.topInfluentialTokens('hello world', -3)
+    assert.deepEqual(tokens, [])
   })
 })
 
@@ -623,14 +854,45 @@ describe('bayes .getCategoryStats()', function () {
     assert.ok(stats.greetings.vocabularySize > 0)
   })
 
-  it('includes _total aggregate stats', function () {
+  it('includes _total aggregate stats with wordCount', function () {
     var classifier = bayes()
-    classifier.learn('hello', 'greetings')
-    classifier.learn('bye', 'farewells')
+    classifier.learn('hello world', 'greetings')
+    classifier.learn('bye now', 'farewells')
 
     var stats = classifier.getCategoryStats()
 
     assert.equal(stats._total.docCount, 2)
     assert.ok(stats._total.vocabularySize > 0)
+    assert.equal(stats._total.wordCount, stats.greetings.wordCount + stats.farewells.wordCount)
+  })
+})
+
+describe('bayes numerical stability (logsumexp)', function () {
+  it('probabilities still sum to ~1.0 with many categories', function () {
+    var classifier = bayes()
+    for (var i = 0; i < 20; i++) {
+      classifier.learn('word' + i + ' common shared text', 'cat' + i)
+    }
+
+    var result = classifier.categorize('word0 common shared')
+    var sum = result.likelihoods.reduce(function (acc, l) { return acc + l.proba }, 0)
+    assert.ok(Math.abs(sum - 1.0) < 0.01, 'probabilities should sum to ~1.0, got ' + sum)
+  })
+
+  it('handles long documents without NaN', function () {
+    var classifier = bayes()
+    classifier.learn('good great amazing wonderful fantastic', 'positive')
+    classifier.learn('bad terrible awful horrible dreadful', 'negative')
+
+    // create a long document
+    var longText = ''
+    for (var i = 0; i < 100; i++) {
+      longText += 'good great amazing '
+    }
+
+    var result = classifier.categorize(longText)
+    assert.ok(!isNaN(result.likelihoods[0].proba), 'proba should not be NaN')
+    assert.ok(result.likelihoods[0].proba > 0, 'proba should be positive')
+    assert.equal(result.predictedCategory, 'positive')
   })
 })
