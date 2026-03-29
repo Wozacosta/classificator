@@ -76,6 +76,26 @@ describe('bayes serializing/deserializing its state', function () {
     })
 })
 
+describe('bayes using custom tokenizer with fromJson', function () {
+  it('accepts a custom tokenizer passed as an option to fromJson', function () {
+    var splitOnChar = function (text) {
+      return text.split('')
+    }
+
+    var classifier = bayes({ tokenizer: splitOnChar })
+
+    classifier.learn('abcd', 'happy')
+    classifier.learn('efgh', 'sad')
+
+    var jsonRepr = classifier.toJson()
+    var revivedClassifier = bayes.fromJson(jsonRepr, { tokenizer: splitOnChar })
+
+    // the revived classifier should use the custom tokenizer
+    var result = revivedClassifier.categorize('abcd')
+    assert.equal(result.predictedCategory, 'happy')
+  })
+})
+
 describe('bayes .learn() correctness', function () {
   //sentiment analysis test
   it('categorizes correctly for `positive` and `negative` categories', function (done) {
