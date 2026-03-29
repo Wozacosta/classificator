@@ -9,8 +9,11 @@ export default defineConfig({
   clean: true,
   target: 'node18',
   outDir: 'dist',
-  footer: {
-    // Make `require('classificator')` return the factory function directly
-    js: 'if (module.exports.default) { Object.assign(module.exports.default, module.exports); module.exports = module.exports.default; }',
+  onSuccess: async () => {
+    // Patch CJS output so `require('classificator')` returns the factory function directly
+    const fs = await import('fs')
+    const cjs = fs.readFileSync('dist/index.cjs', 'utf8')
+    const patched = cjs + '\nif (module.exports.default) { Object.assign(module.exports.default, module.exports); module.exports = module.exports.default; }\n'
+    fs.writeFileSync('dist/index.cjs', patched)
   },
 })

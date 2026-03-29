@@ -80,13 +80,28 @@ Full type declarations are included. All interfaces are exported:
 
 ```ts
 import bayes from 'classificator'
-import type { CategorizeResult, NaivebayesOptions, Likelihood } from 'classificator'
+import type {
+  NaivebayesOptions,    // constructor options
+  CategorizeResult,     // return type of categorize()
+  Likelihood,           // single category likelihood entry
+  InfluentialToken,     // return type of topInfluentialTokens()
+  BatchItem,            // { text, category } for learnBatch()
+  CategoryStats,        // per-category stats
+  CategoryStatsResult,  // return type of getCategoryStats()
+} from 'classificator'
 
 const options: NaivebayesOptions = { alpha: 0.5, fitPrior: false }
 const classifier = bayes(options)
 
 classifier.learn('great movie', 'positive')
 const result: CategorizeResult = classifier.categorize('great')
+```
+
+You can also import the class directly:
+
+```ts
+import { Naivebayes } from 'classificator'
+const classifier = new Naivebayes({ alpha: 0.5 })
 ```
 
 
